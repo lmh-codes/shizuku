@@ -6,10 +6,10 @@ Shizuku 可以让支持它的应用通过 ADB 或 root 权限调用部分系统 
 
 ## 当前版本
 
-- 版本：`13.7.0.r1.b844bc4`
+- 版本：`13.7.0.r3.dafd7be`
 - 适配目标：Android 17 / API 37
 - applicationId：`moe.shizuku.privileged.api`
-- 发布类型：测试预发布版
+- 发布类型：测试预发布版（Release 签名）
 
 ## 更新内容
 
@@ -26,16 +26,16 @@ Shizuku 可以让支持它的应用通过 ADB 或 root 权限调用部分系统 
 前往 [v13.7.0 发布页面](https://github.com/lmh-codes/shizuku/releases/tag/v13.7.0) 下载：
 
 ```text
-shizuku-v13.7.0.r1.b844bc4-release.apk
+shizuku-v13.7.0.r3.dafd7be-release.apk
 ```
 
 SHA-256：
 
 ```text
-E0E59DCEE7E3C158C84FEC724E07C6F044108B2621864FA8C56CF0B2DE12DFFF
+FCE5EFEA3BC80BDD7AFE93F280C940598629A8D878302D4D2502DD17E04BA1D9
 ```
 
-> 当前 APK 使用 Android Debug 证书签名，仅用于测试。Debug 签名不能作为正式生产签名，也不能保证不会被安全软件误报。
+> 当前 APK 已改用独立 Release 证书签名，不再使用 Android Debug 证书。安全软件仍可能因为 Shizuku 的 ADB、系统服务和高权限能力进行行为检测，因此不能保证所有设备都不报毒。
 
 ## 构建
 
@@ -62,7 +62,7 @@ $env:ANDROID_SDK_ROOT = 'E:\Android\Sdk'
 
 - 本仓库为 Android 17 兼容测试项目，不代表 Shizuku 官方发布版本。
 - 尚未完成 Android 17 真机全流程验证。
-- 如果需要正式分发，应由仓库所有者提供并妥善保管独立的 release keystore，然后重新签名构建。
+- Release keystore 仅保存在构建机的安全目录中，没有上传到仓库；后续更新必须继续使用同一签名，否则 Android 无法覆盖安装。
 - 上游项目及官方文档：[RikkaApps/Shizuku](https://github.com/RikkaApps/Shizuku)
 - 官方用户指南：[shizuku.rikka.app](https://shizuku.rikka.app/)
 
