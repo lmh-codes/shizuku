@@ -31,7 +31,7 @@ Shizuku 可以让支持它的应用通过 ADB 或 root 权限调用部分系统 
 
 ## APK 下载
 
-前往 [v13.7.1 发布页面](https://github.com/lmh-codes/shizuku/releases/tag/v13.7.1) 下载最新 APK。
+前往 [v13.7.1 发布页面](https://github.com/lmh-codes/shizuku/releases/tag/v13.7.1-r8) 下载最新 APK。
 
 > 当前 APK 已改用独立 Release 证书签名，不再使用 Android Debug 证书。安全软件仍可能因为 Shizuku 的 ADB、系统服务和高权限能力进行行为检测，因此不能保证所有设备都不报毒。
 
