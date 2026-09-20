@@ -192,8 +192,6 @@ private class ViewModel(context: Context) : androidx.lifecycle.ViewModel() {
                 it.printStackTrace()
             }.onSuccess {
                 if (it) {
-                    ShizukuSettings.getPreferences().edit()
-                        .putBoolean(ShizukuSettings.WIRELESS_ADB_PAIRED, true).apply()
                     _result.postValue(null)
                 }
             }

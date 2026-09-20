@@ -25,7 +25,6 @@ public class ShizukuSettings {
     public static final String NIGHT_MODE = "night_mode";
     public static final String LANGUAGE = "language";
     public static final String KEEP_START_ON_BOOT = "start_on_boot";
-    public static final String WIRELESS_ADB_PAIRED = "wireless_adb_paired";
 
     private static SharedPreferences sPreferences;
 

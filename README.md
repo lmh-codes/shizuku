@@ -6,7 +6,7 @@ Shizuku 可以让支持它的应用通过 ADB 或 root 权限调用部分系统 
 
 ## 当前版本
 
-- 版本：`13.7.0.r5.9d1351f`
+- 版本：`13.7.1.r7.b9d4bda`
 - 适配目标：Android 17 / API 37
 - applicationId：`moe.shizuku.privileged.api`
 - 发布类型：测试预发布版（Release 签名）
@@ -21,23 +21,17 @@ Shizuku 可以让支持它的应用通过 ADB 或 root 权限调用部分系统 
 - 修复部分 Android 17 系统 API 调用兼容问题。
 - 修复从应用管理页返回首页后，已授权应用数量不及时刷新的问题。
 - 修复并发刷新时旧结果覆盖最新授权数量的问题。
+- 修复服务运行后无线 ADB 启动按钮仍可重复点击的问题。
+- 修复配对状态误判导致的重复配对提示，恢复使用持久化 ADB key。
+- 优化首页服务状态刷新，减少上下滑动时的同步 Binder 调用和整页刷新。
+- Release 构建禁止回退到 Android Debug 证书，避免签名混用导致误报或无法覆盖安装。
 - 调整 Binder 分发时机：后台应用不会仅因进程或 UID 状态变化提前收到 Binder。
 - 只有目标应用进入前台并主动调用 Shizuku 时，才会显示权限确认。
-- 版本号更新为 13.7.0。
+- 版本号更新为 13.7.1。
 
 ## APK 下载
 
-前往 [v13.7.0 发布页面](https://github.com/lmh-codes/shizuku/releases/tag/v13.7.0) 下载：
-
-```text
-shizuku-v13.7.0.r5.9d1351f-release.apk
-```
-
-SHA-256：
-
-```text
-3DBBBAFBFFBA65EE9A0FA1833C4718249868124F8C629E5743FE263C29072387
-```
+前往 [v13.7.1 发布页面](https://github.com/lmh-codes/shizuku/releases/tag/v13.7.1) 下载最新 APK。
 
 > 当前 APK 已改用独立 Release 证书签名，不再使用 Android Debug 证书。安全软件仍可能因为 Shizuku 的 ADB、系统服务和高权限能力进行行为检测，因此不能保证所有设备都不报毒。
 

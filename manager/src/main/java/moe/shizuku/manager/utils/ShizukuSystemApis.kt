@@ -41,7 +41,7 @@ object ShizukuSystemApis {
                 users.clear()
                 users.addAll(getUsers())
             }
-            return users
+            return ArrayList(users)
         }
     }
 
@@ -67,8 +67,11 @@ object ShizukuSystemApis {
             PackageManager.PERMISSION_DENIED
         } else try {
             PermissionManagerApis.checkPermission(permName, pkgName, userId)
-        } catch (tr: RemoteException) {
-            throw RuntimeException(tr.message, tr)
+        } catch (tr: Throwable) {
+            // Android 17 can reject the legacy hidden signature with NoSuchMethodError.
+            // This check is only a stale-server probe; do not turn a healthy binder into
+            // an error state in the manager UI.
+            PackageManager.PERMISSION_DENIED
         }
     }
 

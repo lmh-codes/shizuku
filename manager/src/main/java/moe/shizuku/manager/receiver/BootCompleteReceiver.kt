@@ -1,8 +1,11 @@
 package moe.shizuku.manager.receiver
 
+import android.Manifest.permission.WRITE_SECURE_SETTINGS
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import com.topjohnwu.superuser.Shell
 import moe.shizuku.manager.AppConstants
@@ -25,7 +28,9 @@ class BootCompleteReceiver : BroadcastReceiver() {
 
         if (ShizukuSettings.getLastLaunchMode() == LaunchMethod.ROOT) {
             rootStart(context)
-        } else if (ShizukuSettings.getLastLaunchMode() == LaunchMethod.ADB) {
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+            && context.checkSelfPermission(WRITE_SECURE_SETTINGS) == PackageManager.PERMISSION_GRANTED
+            && ShizukuSettings.getLastLaunchMode() == LaunchMethod.ADB) {
             AdbAutoStartJobService.schedule(context)
         } else {
             Log.w(AppConstants.TAG, "No support start on boot")

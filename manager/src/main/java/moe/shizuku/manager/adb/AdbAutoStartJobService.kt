@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
+import androidx.annotation.RequiresApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,10 +20,13 @@ import kotlinx.coroutines.runInterruptible
 import moe.shizuku.manager.ShizukuSettings
 import moe.shizuku.manager.starter.Starter
 import rikka.shizuku.Shizuku
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
+@RequiresApi(Build.VERSION_CODES.R)
 class AdbAutoStartJobService : JobService() {
 
     private var runningJob: kotlinx.coroutines.Job? = null
@@ -50,6 +54,7 @@ class AdbAutoStartJobService : JobService() {
 
     private suspend fun startShizuku(): Boolean {
         if (Shizuku.pingBinder()) return true
+        if (ShizukuSettings.getLastLaunchMode() != ShizukuSettings.LaunchMethod.ADB) return false
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
             || checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) != PackageManager.PERMISSION_GRANTED
         ) return false
@@ -68,17 +73,25 @@ class AdbAutoStartJobService : JobService() {
 
     private suspend fun tryConnect(): Boolean {
         val connected = AtomicBoolean(false)
+        val attemptedPorts = ConcurrentHashMap.newKeySet<Int>()
         val latch = CountDownLatch(1)
+        val executor = Executors.newSingleThreadExecutor()
         val mdns = AdbMdns(this, AdbMdns.TLS_CONNECT) { port ->
-            if (port <= 0 || connected.get()) return@AdbMdns
+            if (port <= 0 || connected.get() || !attemptedPorts.add(port)) return@AdbMdns
             try {
-                val key = AdbKey(PreferenceAdbKeyStore(ShizukuSettings.getPreferences()), "shizuku")
-                AdbClient("127.0.0.1", port, key).use { it.connect(); it.shellCommand(Starter.internalCommand, null) }
-                connected.set(true)
-            } catch (_: Exception) {
-            } finally {
-                latch.countDown()
-            }
+                executor.execute {
+                    try {
+                        val key = AdbKey(PreferenceAdbKeyStore(ShizukuSettings.getPreferences()), "shizuku")
+                        AdbClient("127.0.0.1", port, key).use {
+                            it.connect()
+                            it.shellCommand(Starter.internalCommand, null)
+                        }
+                        connected.set(true)
+                        latch.countDown()
+                    } catch (_: Exception) {
+                    }
+                }
+            } catch (_: RuntimeException) { }
         }
         return try {
             mdns.start()
@@ -86,6 +99,7 @@ class AdbAutoStartJobService : JobService() {
             connected.get()
         } finally {
             mdns.stop()
+            executor.shutdownNow()
         }
     }
 

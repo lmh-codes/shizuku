@@ -10,8 +10,5 @@ if (ksFile.canRead()) {
         android.signingConfigs.sign.keyPassword props['KEYSTORE_ALIAS_PASSWORD']
     }
 } else {
-    android.signingConfigs.sign.storeFile = android.signingConfigs.debug.storeFile
-    android.signingConfigs.sign.storePassword = android.signingConfigs.debug.storePassword
-    android.signingConfigs.sign.keyAlias = android.signingConfigs.debug.keyAlias
-    android.signingConfigs.sign.keyPassword = android.signingConfigs.debug.keyPassword
+    // Do not silently fall back to the Android debug certificate for Release.
 }

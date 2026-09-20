@@ -52,7 +52,11 @@ abstract class HomeActivity : AppBarActivity() {
             if (it.status == Status.SUCCESS) {
                 val status = homeModel.serviceStatus.value?.data ?: return@observe
                 adapter.updateData()
-                ShizukuSettings.setLastLaunchMode(if (status.uid == 0) ShizukuSettings.LaunchMethod.ROOT else ShizukuSettings.LaunchMethod.ADB)
+                if (status.isRunning) {
+                    ShizukuSettings.setLastLaunchMode(
+                        if (status.uid == 0) ShizukuSettings.LaunchMethod.ROOT else ShizukuSettings.LaunchMethod.ADB
+                    )
+                }
             }
         }
         appsModel.grantedCount.observe(this) {

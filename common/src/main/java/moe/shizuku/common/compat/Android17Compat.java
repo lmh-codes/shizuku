@@ -7,6 +7,7 @@ import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.util.Log;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import rikka.hidden.compat.PackageManagerApis;
@@ -25,7 +26,8 @@ import rikka.hidden.compat.PermissionManagerApis;
  * {@code deviceId = 0}. {@link #findMethod}/{@link #invokeMethod} locate the correct overload and
  * position the extra argument regardless of the exact A17 signature shape.
  *
- * <p>Adapted from the Android 17 compatibility implementation used by the Shizuku ecosystem.
+ * <p>Ported from the field-verified Android 17 compatibility implementation used by the Shizuku
+ * ecosystem. The throwing hidden-compat wrappers are used so ABI errors reach the fallback.
  * Runs only in the privileged server process,
  * where {@link ServiceManager} yields privileged binders; the manager never invokes it.
  */
@@ -64,14 +66,17 @@ public class Android17Compat {
 
     public static PackageInfo getPackageInfo(String packageName, long flags, int userId) {
         try {
-            return PackageManagerApis.getPackageInfoNoThrow(packageName, flags, userId);
+            // Do not use the *NoThrow wrapper here. It catches NoSuchMethodError internally,
+            // which would prevent the Android 17 reflective fallback below from running.
+            return PackageManagerApis.getPackageInfo(packageName, flags, userId);
         } catch (NoSuchMethodError e) {
             try {
                 Object pm = getPackageManager();
                 if (sGetPackageInfoMethod == null) {
                     synchronized (Android17Compat.class) {
                         if (sGetPackageInfoMethod == null) {
-                            sGetPackageInfoMethod = findMethod(pm, "getPackageInfo", String.class, long.class);
+                            sGetPackageInfoMethod = findMethod(pm, "getPackageInfo", 3, 4,
+                                    String.class, long.class);
                         }
                     }
                 }
@@ -82,19 +87,23 @@ public class Android17Compat {
                 Log.e(TAG, "Android 17 fallback for getPackageInfo failed", ex);
             }
             return null;
+        } catch (Throwable e) {
+            return null;
         }
     }
 
     public static ApplicationInfo getApplicationInfo(String packageName, long flags, int userId) {
         try {
-            return PackageManagerApis.getApplicationInfoNoThrow(packageName, flags, userId);
+            // See getPackageInfo: the throwing wrapper is required to detect Android 17 ABI drift.
+            return PackageManagerApis.getApplicationInfo(packageName, flags, userId);
         } catch (NoSuchMethodError e) {
             try {
                 Object pm = getPackageManager();
                 if (sGetApplicationInfoMethod == null) {
                     synchronized (Android17Compat.class) {
                         if (sGetApplicationInfoMethod == null) {
-                            sGetApplicationInfoMethod = findMethod(pm, "getApplicationInfo", String.class, long.class);
+                            sGetApplicationInfoMethod = findMethod(pm, "getApplicationInfo", 3, 4,
+                                    String.class, long.class);
                         }
                     }
                 }
@@ -104,6 +113,8 @@ public class Android17Compat {
             } catch (Throwable ex) {
                 Log.e(TAG, "Android 17 fallback for getApplicationInfo failed", ex);
             }
+            return null;
+        } catch (Throwable e) {
             return null;
         }
     }
@@ -120,7 +131,8 @@ public class Android17Compat {
                 if (sCheckPermissionMethod == null) {
                     synchronized (Android17Compat.class) {
                         if (sCheckPermissionMethod == null) {
-                            sCheckPermissionMethod = findMethod(pm, "checkPermission", String.class, String.class);
+                            sCheckPermissionMethod = findMethod(pm, "checkPermission", 3, 4,
+                                    String.class, String.class);
                         }
                     }
                 }
@@ -143,7 +155,8 @@ public class Android17Compat {
                 if (sCheckPermissionUidMethod == null) {
                     synchronized (Android17Compat.class) {
                         if (sCheckPermissionUidMethod == null) {
-                            sCheckPermissionUidMethod = findMethod(pm, "checkPermission", String.class, int.class);
+                            sCheckPermissionUidMethod = findMethod(pm, "checkPermission", 2, 3,
+                                    String.class, int.class);
                         }
                     }
                 }
@@ -171,16 +184,20 @@ public class Android17Compat {
                 if (sGrantRuntimePermissionMethod == null) {
                     synchronized (Android17Compat.class) {
                         if (sGrantRuntimePermissionMethod == null) {
-                            sGrantRuntimePermissionMethod = findMethod(pm, "grantRuntimePermission", String.class, String.class);
+                            sGrantRuntimePermissionMethod = findMethod(pm, "grantRuntimePermission", 3, 4,
+                                    String.class, String.class);
                         }
                     }
                 }
                 if (sGrantRuntimePermissionMethod != null) {
                     invokeMethod(pm, sGrantRuntimePermissionMethod, packageName, permissionName, userId);
+                    return;
                 }
             } catch (Throwable ex) {
                 Log.e(TAG, "Android 17 fallback for grantRuntimePermission failed", ex);
+                throw asRemoteException("grantRuntimePermission", ex);
             }
+            throw asRemoteException("grantRuntimePermission", e);
         }
     }
 
@@ -193,30 +210,49 @@ public class Android17Compat {
                 if (sRevokeRuntimePermissionMethod == null) {
                     synchronized (Android17Compat.class) {
                         if (sRevokeRuntimePermissionMethod == null) {
-                            sRevokeRuntimePermissionMethod = findMethod(pm, "revokeRuntimePermission", String.class, String.class);
+                            sRevokeRuntimePermissionMethod = findMethod(pm, "revokeRuntimePermission", 4, 5,
+                                    String.class, String.class);
                         }
                     }
                 }
                 if (sRevokeRuntimePermissionMethod != null) {
                     Class<?>[] paramTypes = sRevokeRuntimePermissionMethod.getParameterTypes();
                     if (paramTypes.length == 5 && paramTypes[4] == String.class) {
-                        sRevokeRuntimePermissionMethod.invoke(pm, packageName, permissionName, DEVICE_ID_DEFAULT, userId, "shizuku");
+                        sRevokeRuntimePermissionMethod.invoke(pm, packageName, permissionName,
+                                deviceIdFor(paramTypes[2]), userId, "shizuku");
+                    } else if (paramTypes.length == 4 && paramTypes[3] == String.class) {
+                        sRevokeRuntimePermissionMethod.invoke(pm, packageName, permissionName, userId, "shizuku");
                     } else {
                         invokeMethod(pm, sRevokeRuntimePermissionMethod, packageName, permissionName, userId);
                     }
+                    return;
                 }
             } catch (Throwable ex) {
                 Log.e(TAG, "Android 17 fallback for revokeRuntimePermission failed", ex);
+                throw asRemoteException("revokeRuntimePermission", ex);
             }
+            throw asRemoteException("revokeRuntimePermission", e);
         }
     }
 
-    private static Method findMethod(Object obj, String name, Class<?>... prefixTypes) {
+    private static RemoteException asRemoteException(String operation, Throwable error) {
+        Throwable cause = error instanceof InvocationTargetException && error.getCause() != null
+                ? error.getCause() : error;
+        if (cause instanceof RemoteException) {
+            return (RemoteException) cause;
+        }
+        RemoteException exception = new RemoteException(operation + " failed: " + cause);
+        exception.initCause(cause);
+        return exception;
+    }
+
+    private static Method findMethod(Object obj, String name, int minParameters, int maxParameters,
+                                     Class<?>... prefixTypes) {
         Method bestMethod = null;
         for (Method method : obj.getClass().getMethods()) {
             if (name.equals(method.getName())) {
                 Class<?>[] paramTypes = method.getParameterTypes();
-                if (paramTypes.length >= prefixTypes.length) {
+                if (paramTypes.length >= minParameters && paramTypes.length <= maxParameters) {
                     boolean match = true;
                     for (int i = 0; i < prefixTypes.length; i++) {
                         if (paramTypes[i] != prefixTypes[i]) {
@@ -235,6 +271,10 @@ public class Android17Compat {
         return bestMethod;
     }
 
+    private static Object deviceIdFor(Class<?> parameterType) {
+        return parameterType == String.class ? "default:0" : DEVICE_ID_DEFAULT;
+    }
+
     private static Object invokeMethod(Object obj, Method method, Object... prefixArgs) throws Exception {
         Class<?>[] paramTypes = method.getParameterTypes();
         Object[] args = new Object[paramTypes.length];
@@ -245,7 +285,7 @@ public class Android17Compat {
 
         if (paramTypes.length == prefixArgs.length + 1) {
             System.arraycopy(prefixArgs, 0, args, 0, prefixLen);
-            args[prefixLen] = DEVICE_ID_DEFAULT;
+            args[prefixLen] = deviceIdFor(paramTypes[prefixLen]);
             args[prefixLen + 1] = userId;
             for (int i = prefixLen + 2; i < paramTypes.length; i++) {
                 if (paramTypes[i] == int.class) args[i] = 0;
@@ -260,4 +300,3 @@ public class Android17Compat {
         return method.invoke(obj, args);
     }
 }
-

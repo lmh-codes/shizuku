@@ -6,8 +6,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Job
 import moe.shizuku.manager.Helps
@@ -16,6 +18,7 @@ import moe.shizuku.manager.authorization.AuthorizationManager
 import moe.shizuku.manager.databinding.AppListItemBinding
 import moe.shizuku.manager.ktx.toHtml
 import moe.shizuku.manager.utils.AppIconCache
+import moe.shizuku.manager.utils.Logger.LOGGER
 import moe.shizuku.manager.utils.ShizukuSystemApis
 import moe.shizuku.manager.utils.UserHandleCompat
 import rikka.html.text.HtmlCompat
@@ -76,8 +79,15 @@ class AppViewHolder(private val binding: AppListItemBinding) : BaseViewHolder<Pa
                 } catch (ignored: Throwable) {
                 }
             }
+        } catch (e: Throwable) {
+            LOGGER.e(e, "Failed to update authorization for $packageName")
+            Toast.makeText(context, R.string.app_management_update_failed, Toast.LENGTH_SHORT).show()
+        } finally {
+            val position = bindingAdapterPosition
+            if (position != RecyclerView.NO_POSITION) {
+                adapter.notifyItemChanged(position, Any())
+            }
         }
-        adapter.notifyItemChanged(adapterPosition, Any())
     }
 
     override fun onBind() {

@@ -11,17 +11,17 @@ import moe.shizuku.manager.R
 import moe.shizuku.manager.databinding.HomeItemContainerBinding
 import moe.shizuku.manager.databinding.HomeStartRootBinding
 import moe.shizuku.manager.ktx.toHtml
+import moe.shizuku.manager.model.ServiceStatus
 import moe.shizuku.manager.starter.StarterActivity
 import rikka.html.text.HtmlCompat
 import rikka.recyclerview.BaseViewHolder
 import rikka.recyclerview.BaseViewHolder.Creator
-import rikka.shizuku.Shizuku
 
 class StartRootViewHolder(private val binding: HomeStartRootBinding, root: View) :
-    BaseViewHolder<Boolean>(root) {
+    BaseViewHolder<ServiceStatus>(root) {
 
     companion object {
-        val CREATOR = Creator<Boolean> { inflater: LayoutInflater, parent: ViewGroup? ->
+        val CREATOR = Creator<ServiceStatus> { inflater: LayoutInflater, parent: ViewGroup? ->
             val outer = HomeItemContainerBinding.inflate(inflater, parent, false)
             val inner = HomeStartRootBinding.inflate(inflater, outer.root, true)
             StartRootViewHolder(inner, outer.root)
@@ -51,7 +51,7 @@ class StartRootViewHolder(private val binding: HomeStartRootBinding, root: View)
     override fun onBind() {
         start.isEnabled = true
         restart.isEnabled = true
-        if (data!!) {
+        if (data.isRunning && data.uid == 0) {
             start.visibility = View.GONE
             restart.visibility = View.VISIBLE
         } else {
@@ -66,7 +66,7 @@ class StartRootViewHolder(private val binding: HomeStartRootBinding, root: View)
                     "<b><a href=\"https://dontkillmyapp.com/\">Don\'t kill my app!</a></b>"
                 )
             )
-        if (Shizuku.pingBinder()) {
+        if (data.isRunning) {
             sb.append("<p>").append(
                 context.getString(
                     R.string.home_root_description_sui,

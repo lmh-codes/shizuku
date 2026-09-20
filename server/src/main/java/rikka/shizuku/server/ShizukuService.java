@@ -123,7 +123,6 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
         BinderSender.register(this);
 
         mainHandler.post(() -> {
-            sendBinderToClient();
             sendBinderToManager();
         });
     }
@@ -298,6 +297,15 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
         LOGGER.i("dispatchPermissionConfirmationResult: uid=%d, pid=%d, requestCode=%d, allowed=%s, onetime=%s",
                 requestUid, requestPid, requestCode, Boolean.toString(allowed), Boolean.toString(onetime));
 
+        if (!onetime && allowed) {
+            try {
+                updateRuntimePermissionForUid(requestUid, true);
+            } catch (RemoteException e) {
+                LOGGER.e(e, "dispatchPermissionConfirmationResult: failed to grant uid %d", requestUid);
+                allowed = false;
+            }
+        }
+
         List<ClientRecord> records = clientManager.findClients(requestUid);
         List<String> packages = new ArrayList<>();
         if (records.isEmpty()) {
@@ -314,24 +322,6 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
 
         if (!onetime) {
             configManager.update(requestUid, packages, ConfigManager.MASK_PERMISSION, allowed ? ConfigManager.FLAG_ALLOWED : ConfigManager.FLAG_DENIED);
-        }
-
-        if (!onetime && allowed) {
-            int userId = UserHandleCompat.getUserId(requestUid);
-
-            for (String packageName : PackageManagerApis.getPackagesForUidNoThrow(requestUid)) {
-                PackageInfo pi = Android17Compat.getPackageInfo(packageName, PackageManager.GET_PERMISSIONS, userId);
-                if (pi == null || pi.requestedPermissions == null || !ArraysKt.contains(pi.requestedPermissions, PERMISSION)) {
-                    continue;
-                }
-
-                int deviceId = 0;//Context.DEVICE_ID_DEFAULT
-                if (allowed) {
-                    Android17Compat.grantRuntimePermission(packageName, PERMISSION, userId);
-                } else {
-                    Android17Compat.revokeRuntimePermission(packageName, PERMISSION, userId);
-                }
-            }
         }
     }
 
@@ -377,11 +367,10 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
             return;
         }
 
-        int userId = UserHandleCompat.getUserId(uid);
-
         if ((mask & ConfigManager.MASK_PERMISSION) != 0) {
             boolean allowed = (value & ConfigManager.FLAG_ALLOWED) != 0;
-            boolean denied = (value & ConfigManager.FLAG_DENIED) != 0;
+
+            updateRuntimePermissionForUid(uid, allowed);
 
             List<ClientRecord> records = clientManager.findClients(uid);
             for (ClientRecord record : records) {
@@ -394,21 +383,6 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
                 }
             }
 
-            for (String packageName : PackageManagerApis.getPackagesForUidNoThrow(uid)) {
-                PackageInfo pi = Android17Compat.getPackageInfo(packageName, PackageManager.GET_PERMISSIONS, userId);
-                if (pi == null || pi.requestedPermissions == null || !ArraysKt.contains(pi.requestedPermissions, PERMISSION)) {
-                    continue;
-                }
-
-                int deviceId = 0;//Context.DEVICE_ID_DEFAULT
-                if (allowed) {
-                    Android17Compat.grantRuntimePermission(packageName, PERMISSION, userId);
-                } else {
-                    Android17Compat.revokeRuntimePermission(packageName, PERMISSION, userId);
-                }
-
-                // TODO kill user service using
-            }
         }
 
         configManager.update(uid, null, mask, value);
@@ -417,6 +391,21 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
     private void onPermissionRevoked(String packageName) {
         // TODO add runtime permission listener
         getUserServiceManager().removeUserServicesForPackage(packageName);
+    }
+
+    private void updateRuntimePermissionForUid(int uid, boolean allowed) throws RemoteException {
+        int userId = UserHandleCompat.getUserId(uid);
+        for (String packageName : PackageManagerApis.getPackagesForUidNoThrow(uid)) {
+            PackageInfo pi = Android17Compat.getPackageInfo(packageName, PackageManager.GET_PERMISSIONS, userId);
+            if (pi == null || pi.requestedPermissions == null || !ArraysKt.contains(pi.requestedPermissions, PERMISSION)) {
+                continue;
+            }
+            if (allowed) {
+                Android17Compat.grantRuntimePermission(packageName, PERMISSION, userId);
+            } else {
+                Android17Compat.revokeRuntimePermission(packageName, PERMISSION, userId);
+            }
+        }
     }
 
     private ParcelableListSlice<PackageInfo> getApplications(int userId) {
@@ -437,7 +426,7 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
                 int flags = 0;
                 ShizukuConfig.PackageEntry entry = configManager.find(uid);
                 if (entry != null) {
-                    if (entry.packages != null && !entry.packages.contains(pi.packageName))
+                    if (entry.packages != null && !entry.packages.isEmpty() && !entry.packages.contains(pi.packageName))
                         continue;
                     flags = entry.flags & ConfigManager.MASK_PERMISSION;
                 }
@@ -461,6 +450,7 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
         //LOGGER.d("transact: code=%d, calling uid=%d", code, Binder.getCallingUid());
         if (code == ServerConstants.BINDER_TRANSACTION_getApplications) {
             data.enforceInterface(ShizukuApiConstants.BINDER_DESCRIPTOR);
+            enforceManagerPermission("getApplications");
             int userId = data.readInt();
             ParcelableListSlice<PackageInfo> result = getApplications(userId);
             reply.writeNoException();

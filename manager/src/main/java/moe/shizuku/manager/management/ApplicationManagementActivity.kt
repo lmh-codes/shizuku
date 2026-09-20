@@ -82,6 +82,6 @@ class ApplicationManagementActivity : AppBarActivity() {
 
     override fun onResume() {
         super.onResume()
-        adapter.notifyDataSetChanged()
+        viewModel.load()
     }
 }

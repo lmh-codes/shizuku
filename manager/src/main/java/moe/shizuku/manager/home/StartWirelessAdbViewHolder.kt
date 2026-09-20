@@ -13,7 +13,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentActivity
 import moe.shizuku.manager.Helps
 import moe.shizuku.manager.R
-import moe.shizuku.manager.ShizukuSettings
 import moe.shizuku.manager.adb.AdbPairingTutorialActivity
 import moe.shizuku.manager.databinding.HomeItemContainerBinding
 import moe.shizuku.manager.databinding.HomeStartWirelessAdbBinding
@@ -27,11 +26,11 @@ import rikka.recyclerview.BaseViewHolder
 import rikka.recyclerview.BaseViewHolder.Creator
 import java.net.Inet4Address
 
-class StartWirelessAdbViewHolder(binding: HomeStartWirelessAdbBinding, root: View) :
-    BaseViewHolder<Any?>(root) {
+class StartWirelessAdbViewHolder(private val binding: HomeStartWirelessAdbBinding, root: View) :
+    BaseViewHolder<Boolean>(root) {
 
     companion object {
-        val CREATOR = Creator<Any> { inflater: LayoutInflater, parent: ViewGroup? ->
+        val CREATOR = Creator<Boolean> { inflater: LayoutInflater, parent: ViewGroup? ->
             val outer = HomeItemContainerBinding.inflate(inflater, parent, false)
             val inner = HomeStartWirelessAdbBinding.inflate(inflater, outer.root, true)
             StartWirelessAdbViewHolder(inner, outer.root)
@@ -61,16 +60,14 @@ class StartWirelessAdbViewHolder(binding: HomeStartWirelessAdbBinding, root: Vie
         }
     }
 
-    override fun onBind(payloads: MutableList<Any>) {
-        super.onBind(payloads)
+    override fun onBind() {
+        binding.button1.isEnabled = !data
     }
+
+    override fun onBind(payloads: MutableList<Any>) = onBind()
 
     private fun onAdbClicked(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (!ShizukuSettings.getPreferences().getBoolean(ShizukuSettings.WIRELESS_ADB_PAIRED, false)) {
-                onPairClicked(context)
-                return
-            }
             AdbDialogFragment().show(context.asActivity<FragmentActivity>().supportFragmentManager)
             return
         }

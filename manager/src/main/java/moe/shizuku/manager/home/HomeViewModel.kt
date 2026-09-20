@@ -15,8 +15,12 @@ import moe.shizuku.manager.utils.Logger.LOGGER
 import moe.shizuku.manager.utils.ShizukuSystemApis
 import rikka.lifecycle.Resource
 import rikka.shizuku.Shizuku
+import java.util.concurrent.atomic.AtomicInteger
 
 class HomeViewModel : ViewModel() {
+
+    private var loadJob: kotlinx.coroutines.Job? = null
+    private val loadGeneration = AtomicInteger()
 
     private val _serviceStatus = MutableLiveData<Resource<ServiceStatus>>()
     val serviceStatus = _serviceStatus as LiveData<Resource<ServiceStatus>>
@@ -47,13 +51,17 @@ class HomeViewModel : ViewModel() {
     }
 
     fun reload() {
-        viewModelScope.launch(Dispatchers.IO) {
+        loadJob?.cancel()
+        val generation = loadGeneration.incrementAndGet()
+        loadJob = viewModelScope.launch(Dispatchers.IO) {
             try {
                 val status = load()
+                if (generation != loadGeneration.get()) return@launch
                 _serviceStatus.postValue(Resource.success(status))
             } catch (e: CancellationException) {
 
             } catch (e: Throwable) {
+                if (generation != loadGeneration.get()) return@launch
                 _serviceStatus.postValue(Resource.error(e, ServiceStatus()))
             }
         }
