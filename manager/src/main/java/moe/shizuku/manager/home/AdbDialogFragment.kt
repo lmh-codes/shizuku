@@ -32,7 +32,7 @@ class AdbDialogFragment : DialogFragment() {
         val context = requireContext()
         binding = AdbDialogBinding.inflate(layoutInflater)
         adbMdns = AdbMdns(context, AdbMdns.TLS_CONNECT) {
-            port.postValue(it)
+            port.postValue(it.second)
         }
 
         val port = EnvironmentUtils.getAdbTcpPort()
