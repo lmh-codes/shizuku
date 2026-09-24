@@ -16,8 +16,8 @@ import java.util.List;
  * old signature, so on Android 17 it throws {@code NoSuchMethodError}/casts fail and the manager
  * shows "no authorized apps" while the privileged server can't enumerate packages for its config.
  *
- * <p>This shim (ported from thedjchi's fork, whose Android 17 build is field-verified) resolves the
- * package list reflectively so it works across API levels and process contexts:
+ * <p>This shim resolves the package list reflectively so it works across API levels and process
+ * contexts:
  * <ul>
  *   <li>In the <b>manager</b> process it first tries the context {@code PackageManager}
  *       ({@code getInstalledPackagesAsUser}); the manager holds {@code QUERY_ALL_PACKAGES}, so this
