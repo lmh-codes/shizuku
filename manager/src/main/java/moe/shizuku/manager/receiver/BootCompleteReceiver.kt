@@ -39,7 +39,6 @@ class BootCompleteReceiver : BroadcastReceiver() {
 
     private fun rootStart(context: Context) {
         if (!Shell.getShell().isRoot) {
-            //NotificationHelper.notify(context, AppConstants.NOTIFICATION_ID_STATUS, AppConstants.NOTIFICATION_CHANNEL_STATUS, R.string.notification_service_start_no_root)
             Shell.getCachedShell()?.close()
             return
         }
