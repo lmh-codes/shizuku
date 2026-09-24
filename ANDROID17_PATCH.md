@@ -1,24 +1,12 @@
-# Official Shizuku Android 17 Patch
+# Shizuku Android 17 补丁说明
 
-## Baseline
+> 仓库：https://github.com/lmh-codes/shizuku  
+> 正式版：`13.7.0`（首页服务版本 `13.7`）  
+> 唯一上游：官方 [RikkaApps/Shizuku](https://github.com/RikkaApps/Shizuku) / [RikkaApps/Shizuku-API](https://github.com/RikkaApps/Shizuku-API)
 
-- Upstream: `https://github.com/RikkaApps/Shizuku.git`
-- Baseline commit: `b844bc491f1790c72328e1a8e5b2349f8978f0ea`
-- Baseline branch: `master`
-- API submodule source: `https://github.com/RikkaApps/Shizuku-API.git`
+## 包含
 
-This directory keeps the official Shizuku modules and package identifiers. It does not include the ShizukuX/Plus modules, alternate package names, or ShizukuX API.
-
-## Changes
-
-1. Add `Android17Compat` for hidden package and permission APIs whose Android 17 signatures add `deviceId`.
-2. Add `InstalledPackagesCompat` for Android 17 package-list return/signature changes.
-3. Route official server call sites through those compatibility helpers.
-4. Add Android 16/17 local-network permissions and request the runtime permission before wireless ADB pairing.
-5. Raise the official build target from SDK 36 to SDK 37 so the Android 17 permission declarations are compiled against the corresponding platform.
-
-## Verification status
-
-- `git diff --check`: run after the patch; source diff is limited to the files above.
-- Android build: not completed in this environment. The available Gradle cache lacks `kotlin-gradle-plugin:2.1.21` for offline mode, and the online dependency resolution timed out.
-- Android 17 device test: not run; requires a real/emulated API 37 device with wireless debugging and ADB access.
+- Android 17 Compat / mDNS host+port / 本地网络权限 / SDK 37
+- 首页授权数 onResume 刷新；AppsViewModel generation
+- 启动时不下发 sendBinderToClient；BinderSender 仅前台推送
+- 关于页源码链接：https://github.com/lmh-codes/shizuku
