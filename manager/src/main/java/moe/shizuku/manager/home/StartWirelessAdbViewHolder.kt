@@ -26,11 +26,11 @@ import rikka.recyclerview.BaseViewHolder
 import rikka.recyclerview.BaseViewHolder.Creator
 import java.net.Inet4Address
 
-class StartWirelessAdbViewHolder(private val binding: HomeStartWirelessAdbBinding, root: View) :
-    BaseViewHolder<Boolean>(root) {
+class StartWirelessAdbViewHolder(binding: HomeStartWirelessAdbBinding, root: View) :
+    BaseViewHolder<Any?>(root) {
 
     companion object {
-        val CREATOR = Creator<Boolean> { inflater: LayoutInflater, parent: ViewGroup? ->
+        val CREATOR = Creator<Any> { inflater: LayoutInflater, parent: ViewGroup? ->
             val outer = HomeItemContainerBinding.inflate(inflater, parent, false)
             val inner = HomeStartWirelessAdbBinding.inflate(inflater, outer.root, true)
             StartWirelessAdbViewHolder(inner, outer.root)
@@ -60,11 +60,9 @@ class StartWirelessAdbViewHolder(private val binding: HomeStartWirelessAdbBindin
         }
     }
 
-    override fun onBind() {
-        binding.button1.isEnabled = !data
+    override fun onBind(payloads: MutableList<Any>) {
+        super.onBind(payloads)
     }
-
-    override fun onBind(payloads: MutableList<Any>) = onBind()
 
     private fun onAdbClicked(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
