@@ -1,39 +1,29 @@
 # Shizuku Android 17 适配版
 
-这是基于 [RikkaApps/Shizuku](https://github.com/RikkaApps/Shizuku) 制作的 Android 17 适配测试版本。
+基于 [RikkaApps/Shizuku](https://github.com/RikkaApps/Shizuku) 的 Android 17 适配版本。
 
 Shizuku 可以让支持它的应用通过 ADB 或 root 权限调用部分系统 API，避免每次操作都创建 `su` 进程或解析命令行输出。
 
 ## 当前版本
 
-- 版本：`13.7.1.r7.b9d4bda`
+- 版本：`13.7.0`（正式版）
+- 首页服务版本：`13.7`
 - 适配目标：Android 17 / API 37
 - applicationId：`moe.shizuku.privileged.api`
-- 发布类型：测试预发布版（Release 签名）
+- 源码：https://github.com/lmh-codes/shizuku
 
 ## 更新内容
 
-- 恢复首页中间的“已授权应用”列表入口。
-- 修复尚未完成无线调试配对时，点击“启动”没有进入配对页面的问题。
-- 完成配对后，点击“启动”会进入无线 ADB 连接流程。
-- 增加无线 ADB 配对状态记录。
-- 补充 Android 17 兼容接口及相关权限适配。
-- 修复部分 Android 17 系统 API 调用兼容问题。
-- 修复从应用管理页返回首页后，已授权应用数量不及时刷新的问题。
-- 修复并发刷新时旧结果覆盖最新授权数量的问题。
-- 修复服务运行后无线 ADB 启动按钮仍可重复点击的问题。
-- 修复配对状态误判导致的重复配对提示，恢复使用持久化 ADB key。
-- 优化首页服务状态刷新，减少上下滑动时的同步 Binder 调用和整页刷新。
-- Release 构建禁止回退到 Android Debug 证书，避免签名混用导致误报或无法覆盖安装。
-- 调整 Binder 分发时机：后台应用不会仅因进程或 UID 状态变化提前收到 Binder。
-- 只有目标应用进入前台并主动调用 Shizuku 时，才会显示权限确认。
-- 版本号更新为 13.7.1。
+- Android 17 / API 37 兼容（包列表、权限与无线调试相关适配）
+- 修复从应用管理页返回首页后，已授权应用数量不及时刷新的问题
+- 修复并发刷新时旧结果覆盖最新授权数量的问题
+- 调整 Binder 分发：服务启动时不下发到全部客户端；后台仅因进程/UID 状态变化不再主动推送
+- 只有目标应用进入前台并主动调用 Shizuku 时，才会显示权限确认
+- 版本号更新为 13.7；关于页源码链接指向本仓库
 
 ## APK 下载
 
-前往 [v13.7.1 发布页面](https://github.com/lmh-codes/shizuku/releases/tag/v13.7.1-r8) 下载最新 APK。
-
-> 当前 APK 已改用独立 Release 证书签名，不再使用 Android Debug 证书。安全软件仍可能因为 Shizuku 的 ADB、系统服务和高权限能力进行行为检测，因此不能保证所有设备都不报毒。
+前往 [Releases](https://github.com/lmh-codes/shizuku/releases/latest) 下载最新正式版 APK。
 
 ## 构建
 
@@ -58,8 +48,7 @@ $env:ANDROID_SDK_ROOT = 'E:\Android\Sdk'
 
 ## 说明
 
-- 本仓库为 Android 17 兼容测试项目，不代表 Shizuku 官方发布版本。
-- 尚未完成 Android 17 真机全流程验证。
+- 本仓库为 Android 17 兼容项目，不代表 Shizuku 官方发布版本。
 - Release keystore 仅保存在构建机的安全目录中，没有上传到仓库；后续更新必须继续使用同一签名，否则 Android 无法覆盖安装。
 - 上游项目及官方文档：[RikkaApps/Shizuku](https://github.com/RikkaApps/Shizuku)
 - 官方用户指南：[shizuku.rikka.app](https://shizuku.rikka.app/)
