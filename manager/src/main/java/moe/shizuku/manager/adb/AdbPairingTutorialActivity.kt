@@ -104,6 +104,7 @@ class AdbPairingTutorialActivity : AppBarActivity() {
         }
     }
 
+    // thedjchi Android 17: request local-network permission before pairing
     private fun localNetworkPermission(): String? = when {
         Build.VERSION.SDK_INT >= 37 -> "android.permission.ACCESS_LOCAL_NETWORK"
         Build.VERSION.SDK_INT >= 36 -> Manifest.permission.NEARBY_WIFI_DEVICES
@@ -119,9 +120,9 @@ class AdbPairingTutorialActivity : AppBarActivity() {
         val permission = localNetworkPermission()
         if (permission != null && checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
             localNetworkPermissionLauncher.launch(permission)
-            return
+        } else {
+            doStartPairingService()
         }
-        doStartPairingService()
     }
 
     private fun doStartPairingService() {
