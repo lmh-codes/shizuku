@@ -26,6 +26,10 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * 无 Root 开机自动启动：通过 JobScheduler 打开无线调试、发现端口并执行 Starter。
+ * 需 Android 13+，且已授予 WRITE_SECURE_SETTINGS，上次启动方式为 ADB。
+ */
 @RequiresApi(Build.VERSION_CODES.R)
 class AdbAutoStartJobService : JobService() {
 
@@ -76,13 +80,13 @@ class AdbAutoStartJobService : JobService() {
         val attemptedPorts = ConcurrentHashMap.newKeySet<Int>()
         val latch = CountDownLatch(1)
         val executor = Executors.newSingleThreadExecutor()
-        val mdns = AdbMdns(this, AdbMdns.TLS_CONNECT) { port ->
+        val mdns = AdbMdns(this, AdbMdns.TLS_CONNECT) { (host, port) ->
             if (port <= 0 || connected.get() || !attemptedPorts.add(port)) return@AdbMdns
             try {
                 executor.execute {
                     try {
                         val key = AdbKey(PreferenceAdbKeyStore(ShizukuSettings.getPreferences()), "shizuku")
-                        AdbClient("127.0.0.1", port, key).use {
+                        AdbClient(host, port, key).use {
                             it.connect()
                             it.shellCommand(Starter.internalCommand, null)
                         }
@@ -91,7 +95,8 @@ class AdbAutoStartJobService : JobService() {
                     } catch (_: Exception) {
                     }
                 }
-            } catch (_: RuntimeException) { }
+            } catch (_: RuntimeException) {
+            }
         }
         return try {
             mdns.start()
