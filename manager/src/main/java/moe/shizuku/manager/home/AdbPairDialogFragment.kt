@@ -165,8 +165,12 @@ private class ViewModel(context: Context) : androidx.lifecycle.ViewModel() {
     private val _port = MutableLiveData<Int>()
     val port = _port as LiveData<Int>
 
+    @Volatile
+    private var resolvedHost: String = "127.0.0.1"
+
     private val adbMdns: AdbMdns = AdbMdns(context, AdbMdns.TLS_PAIRING) {
-        _port.postValue(it)
+        if (it.second > 0) resolvedHost = it.first
+        _port.postValue(it.second)
     }
 
     init {
@@ -175,7 +179,7 @@ private class ViewModel(context: Context) : androidx.lifecycle.ViewModel() {
 
     fun run(port: Int, password: String) {
         GlobalScope.launch(Dispatchers.IO) {
-            val host = "127.0.0.1"
+            val host = resolvedHost
 
             val key = try {
                 AdbKey(PreferenceAdbKeyStore(ShizukuSettings.getPreferences()), "shizuku")
