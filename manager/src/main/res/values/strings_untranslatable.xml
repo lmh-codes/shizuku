@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="support_email" translatable="false"></string>
+    <string name="translation_url" translatable="false">https://github.com/lmh-codes/shizuku</string>
+    <string name="project_url" translatable="false">https://github.com/lmh-codes/shizuku</string>
+    <string name="help_url" translatable="false">https://github.com/lmh-codes/shizuku</string>
+    <string name="automation_apps_url" translatable="false">https://github.com/lmh-codes/shizuku</string>
+    <string name="releases_url" translatable="false">https://github.com/lmh-codes/shizuku/releases</string>
+    <string name="issues_url" translatable="false">https://github.com/lmh-codes/shizuku/issues</string>
+    <string name="github_releases_api" translatable="false">https://api.github.com/repos/lmh-codes/shizuku/releases</string>
+</resources>

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Repository
+    url: https://github.com/lmh-codes/shizuku
+    about: Project homepage and documentation.
+  - name: Releases
+    url: https://github.com/lmh-codes/shizuku/releases
+    about: Download the latest APK builds.
